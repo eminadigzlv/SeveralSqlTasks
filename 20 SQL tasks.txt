@@ -1,0 +1,157 @@
+
+--JOINING PROJECTION SELECTION
+
+--task 1
+select e.employee_id, e.first_name, e.last_name, e.hire_date
+from employees e
+--where e.hire_date between '01-JAN-1998' and '31-DEC-1999' or
+where e.hire_date between to_date('01-01-2002', 'dd-mm-yyyy') and to_date('31-12-2005', 'dd-mm-yyyy')
+order by e.hire_date;
+
+--task2
+
+select d.department_id, d.department_name
+from employees e join departments d on e.department_id = d.department_id
+group by d.department_id, d.department_name
+having months_between( max(e.hire_date), SYSDATE) < 24
+union
+select d.department_id, d.department_name
+from employees e right join departments d on e.department_id = d.department_id
+where e.hire_date is null;
+
+select * from departments;
+--task 3
+select  d.department_id, d.department_name, extract(year from e.hire_date), count(e.employee_id)
+from departments d left join employees e on d.department_id = e.department_id
+group by d.department_id, d.department_name, extract(year from e.hire_date)
+order by 1, 2, 3;
+
+--task4
+select d.department_id, d.department_name, count(e.employee_id)
+from departments d left join employees e on d.manager_id = e.manager_id
+group by d.department_id, d.department_name
+having count(e.employee_id) > 5
+order by 1, 2, 3;
+
+--task5
+select d.department_name, d.manager_id, concat(concat(m.first_name, ' '),m.last_name) manager_name, m.salary
+from departments d join employees m on d.manager_id=m.employee_id
+where months_between( SYSDATE, m.hire_date) > 5
+order by 1,2;
+
+--task 6
+select j.job_id, j.job_title, avg(e.salary)
+from jobs j join employees e on j.job_id=e.job_id
+group by j.job_id, j.job_title
+order by 1; 
+
+--task7
+select j.job_id, j.job_title, concat(concat(e.first_name, ' '),e.last_name) employee_name, e.salary
+from jobs j join employees e on j.job_id = e.job_id
+where e.salary >= 12000
+order by 1, 2, 3;
+
+--task 8
+select  c.country_id, c.country_name, loc.location_id, loc.city, count(d.department_id)
+from departments d join locations loc on loc.location_id=d.location_id
+    join countries c on c.country_id = loc.country_id
+    where d.department_id in (
+                                                    select d.department_id
+                                                    from departments d join employees e on d.department_id = e.department_id
+                                                    group by d.department_id
+                                                    having count(e.employee_id) >= 2
+                                                    )
+group by c.country_id, c.country_name, loc.location_id, loc.city
+order by 1, 2;
+    
+
+--task9
+select concat(concat(e.first_name, ' '),e.last_name) employee_name, e.salary
+from employees e join departments d on e.department_id=d.department_id
+    join locations loc on d.location_id=loc.location_id
+    where loc.city='London';
+
+--task 10
+select jh.employee_id, concat(concat(e.first_name, ' '),e.last_name) employee_name, j.job_title, jh.start_date, jh.end_date
+from job_history jh join jobs j on jh.job_id=j.job_id
+    join employees e on jh.employee_id=e.employee_id 
+    where e.commission_pct is null
+    order by 1;
+
+--task 11
+select  e.employee_id, concat( concat(e.first_name, ' '), e.last_name), c.country_name
+from employees e join departments d on e.department_id=d.department_id
+    join locations loc on loc.location_id=d.location_id
+    join countries c on c.country_id=loc.country_id
+    order by e.employee_id;
+    
+    
+--task 12
+select e.first_name, e.last_name, e.hire_date, m.hire_date
+from employees e join employees m on e.manager_id=m.employee_id
+where e.hire_date < m.hire_date;
+
+--task 13
+select e.first_name, e.last_name, j.job_title, jh.start_date, jh.end_date, round( months_between( jh.end_date, jh.start_date ), 2 )
+from job_history jh join jobs j on jh.job_id=j.job_id
+    join employees e on e.employee_id=jh.employee_id
+    where months_between( jh.end_date, jh.start_date ) < 20;
+    
+--task 14
+select jh.employee_id, e.first_name, e.last_name, max( jh.end_date )
+from job_history jh join employees e on e.employee_id=jh.employee_id
+group by jh.employee_id, e.first_name, e.last_name
+order by 1, 2;
+
+--task 15
+select d.department_id, d.department_name, trunc( avg(e.salary), 2 ), count(e.employee_id)  
+from employees e join departments d on d.department_id=e.department_id
+where e.commission_pct is not null
+group by d.department_id, d.department_name;
+
+--task 16
+select loc.location_id, loc.city, d.department_id, d.department_name, extract(month from e.hire_date), count(e.employee_id)
+from locations loc join departments d on loc.location_id=d.location_id
+join employees e on d.department_id=e.department_id
+where loc.city = 'Seattle'
+group by loc.location_id, loc.city, d.department_id, d.department_name, extract(month from e.hire_date)
+having count(e.employee_id) > 5
+order by 1,2,3,4,5,6;
+
+--task 17
+select jh.job_id, j.job_title, jh.employee_id, e.first_name, avg(e.salary)
+from job_history jh join jobs j on jh.job_id=j.job_id
+    join employees e on jh.employee_id=e.employee_id
+    group by jh.job_id, j.job_title, jh.employee_id, e.first_name
+    order by 1, 2, 3, 4;
+
+
+--task 18
+select c.country_name, loc.city, count(d.department_id)
+from countries c join locations loc on c.country_id=loc.country_id
+    join departments d on d.location_id=loc.location_id
+    where d.department_id in (
+                                                    select d.department_id
+                                                    from departments d join employees e on d.department_id=e.department_id
+                                                    group by  d.department_id
+                                                    having count(e.employee_id)>5                                        
+                                                )
+    group by c.country_name, loc.city
+    order by 1, 2, 3;
+
+--task 19
+select extract(month from e.hire_date), count(e.employee_id)
+from employees e
+--where extract(year from e.hire_date) = extract(year from to_date('01-01-1999', 'dd-mm-yyyy')) --for proof
+where extract(year from e.hire_date) = extract(year from SYSDATE)
+group by extract(month from hire_date)
+order by 1, 2;
+
+--task 20
+select m.employee_id, m.first_name, m.last_name, count(e.employee_id)
+from employees m join employees e on e.manager_id=m.employee_id
+group by m.employee_id, m.first_name, m.last_name
+order by 1, 2, 3, 4;
+
+
+
